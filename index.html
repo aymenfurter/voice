@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="ai-circle">
+            <div class="circle-animation"></div>
+        </div>
+        <div class="status-text">Ready</div>
+        <button id="start-btn" class="action-btn start-btn" aria-label="Start conversation">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon-start">
+                <path d="M8 5v14l11-7z"/>
+            </svg>
+        </button>
+        <button id="mic-btn" class="action-btn hidden" aria-label="Toggle microphone">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon-mic">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
+                <path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/>
+            </svg>
+        </button>
+        <button id="toggle-chat-btn" class="action-btn hidden" aria-label="Toggle chat">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="icon-chat">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+            </svg>
+        </button>
+    </div>
+    
+    <div class="chat-container hidden">
+        <div id="chat-messages"></div>
+        <button id="stop-btn" class="hidden">Stop Assistant</button>
+    </div>
+    <script src="static/script.js"></script>
+</body>
+</html>
