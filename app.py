@@ -124,7 +124,7 @@ def search_azure_ai(query):
     body = {
         'search': query,
         'select': 'content',
-        'top': 2 
+        'top': 5 
     }
     
     url = f"{search_endpoint}/indexes/{search_index}/docs/search?api-version=2021-04-30-Preview"
@@ -140,7 +140,6 @@ def search_azure_ai(query):
 
 def get_gpt_response(conversation_history, user_intent):
     last_user_message = conversation_history[-1]['content'] if conversation_history else ""
-    print(f"Last User Message: {last_user_message}")
     print(f"Detected User Intent: {user_intent}")
     
     # Search Azure AI Search for relevant content using the detected intent
@@ -161,8 +160,6 @@ def get_gpt_response(conversation_history, user_intent):
     # Add the search context and user intent to the last user message
     messages.append({"role": "user", "content": f"Context: {search_context}\n\nUser Intent: {user_intent}\n\nUser Request: {last_user_message}"})
 
-    print(f"Search Context: {search_context}")
-    
     response = client.chat.completions.create(
         model=gpt4_o,
         messages=messages,
