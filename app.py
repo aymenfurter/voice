@@ -17,6 +17,8 @@ CORS(app)
 load_dotenv()
 
 # Azure Open AI Configuration
+gpt_api_base = os.getenv("GPT_AOAI_API_BASE")
+gpt_key = os.getenv("GPT_AOAI_API_KEY")
 api_base = os.getenv("AOAI_API_BASE")
 api_key = os.getenv("AOAI_API_KEY")
 api_version = "2024-02-01"
@@ -33,6 +35,13 @@ client = AzureOpenAI(
     api_version=api_version,
     azure_endpoint=api_base,
 )
+
+gpt_client = AzureOpenAI(
+    api_key=gpt_key,  
+    api_version=api_version,
+    azure_endpoint=gpt_api_base,
+)
+
 
 @app.route('/')
 def index():
@@ -97,16 +106,22 @@ def speech_to_text_route():
         return jsonify({'error': str(e)}), 500
 
 def detect_intent(conversation_history):
-    last_user_message = conversation_history[-1]['content'] if conversation_history else ""
-    
-    intent_system_message = """You are an intent detection system. Your task is to analyze the user's message and determine their primary intent or purpose. Provide a brief, concise description of the intent in 5-10 words."""
-    
+
+    full_conversation_history = " ".join(
+        f"User: {message['content']}" if message['role'] == 'user' else f"Assistant: {message['content']}"
+        for message in conversation_history
+    )
+
+    intent_system_message = """
+    You are an intent detection system. Your task is to analyze the user's message and the assistant's chat history and determine their primary intent (i.e. what are they looking or searching for?). Provide a brief, concise description of the user intent in 10-15 words.
+    """
+
     intent_messages = [
         {"role": "system", "content": intent_system_message},
-        {"role": "user", "content": f"Detect the intent in this message: {last_user_message}"}
+        {"role": "user", "content": f"Detect the intent in this conversation: {full_conversation_history}"}
     ]
-    
-    intent_response = client.chat.completions.create(
+
+    intent_response = gpt_client.chat.completions.create(
         model=gpt4_o,
         messages=intent_messages,
         temperature=0,
@@ -124,7 +139,7 @@ def search_azure_ai(query):
     body = {
         'search': query,
         'select': 'content',
-        'top': 5 
+        'top': 2 
     }
     
     url = f"{search_endpoint}/indexes/{search_index}/docs/search?api-version=2021-04-30-Preview"
@@ -145,8 +160,21 @@ def get_gpt_response(conversation_history, user_intent):
     # Search Azure AI Search for relevant content using the detected intent
     search_context = search_azure_ai(user_intent)
     
-    system_message = """You are having conversation over the phone. Start and do some smalltalk (if the user digs it) at the beginning. Use natural language and respond as someone would in a phone call. Always ask for the model, then give advice. Never ask to contact a professional. YOU ARE The proofessional. IMPORTANT: Answer in 30-40 words or less. Be concise, natural (be empatic!), friendly and act as a human. You will be given a document as a reference to help you answer the questions. Never share more than 3 steps with the user, guide them through the information step by step. (And ask if they understood each step)"""
-    
+    system_message = """
+    You are having a conversation over the phone. 
+    Start and do some small talk (if the user digs it) at the beginning. 
+    Use natural language and respond as someone would in a phone call. 
+    Always ask for the model, then give advice. 
+    Never ask to contact a professional. 
+    YOU ARE The professional. 
+
+    IMPORTANT: Answer in 30-40 words or less. 
+    Be concise, natural (be empathetic!), friendly, and act as a human. 
+
+    You will be given a document as a reference to help you answer the questions. If you can't find any helpful information int the document, ask clarifying questions to the user instead.
+    Be mindful that the user may be older and not tech-savvy, so be patient and explain things in a simple way. Never share more than 1 step with the user, guide them through the information step by step. 
+    """
+
     messages = [
         {
             "role": "system",
@@ -160,7 +188,7 @@ def get_gpt_response(conversation_history, user_intent):
     # Add the search context and user intent to the last user message
     messages.append({"role": "user", "content": f"Context: {search_context}\n\nUser Intent: {user_intent}\n\nUser Request: {last_user_message}"})
 
-    response = client.chat.completions.create(
+    response = gpt_client.chat.completions.create(
         model=gpt4_o,
         messages=messages,
         temperature=0,
